@@ -1,0 +1,17 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+
+# Environment variables — NEVER commit these
+.env
+backend/.env
+
+# SQLite database — contains real customer data, never commit
+backend/data/
+*.db
+
+# OS files
+.DS_Store
+Thumbs.db
