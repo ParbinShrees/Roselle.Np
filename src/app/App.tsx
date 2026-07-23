@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, memo, useDeferredValue } from "react";
 import { Toaster, toast } from "sonner";
 import { ImageWithFallback } from "@/app/components/figma/ImageWithFallback";
 import emailjs from '@emailjs/browser';
@@ -198,7 +198,7 @@ function RatingStars({ rating, count }: { rating: number; count: number }) {
 /* ═══════════════════════════════════════════════
    PRODUCT CARD
 ═══════════════════════════════════════════════ */
-function ProductCard({
+const ProductCard = memo(function ProductCard({
   product,
   onView,
   onAddToCart,
@@ -313,7 +313,7 @@ function ProductCard({
       </div>
     </article>
   );
-}
+});
 
 /* ═══════════════════════════════════════════════
    MAIN APP
@@ -327,6 +327,7 @@ export default function App() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const deferredSearchQuery = useDeferredValue(searchQuery);
   const [filterColor, setFilterColor] = useState("All");
   const [filterFlower, setFilterFlower] = useState("All");
   const [filterOccasion, setFilterOccasion] = useState("All");
@@ -384,10 +385,10 @@ export default function App() {
   const cartCount = cart.reduce((s, i) => s + i.qty, 0);
 
   /* Search */
-  const searchResults = searchQuery.length > 1
+  const searchResults = deferredSearchQuery.length > 1
     ? PRODUCTS.filter((p) =>
         [p.name, p.color, p.flowerType, ...p.occasions].some((v) =>
-          v.toLowerCase().includes(searchQuery.toLowerCase())
+          v.toLowerCase().includes(deferredSearchQuery.toLowerCase())
         )
       )
     : [];
@@ -500,11 +501,11 @@ export default function App() {
               )}
             </div>
 
-            {searchQuery.length > 1 && (
+            {deferredSearchQuery.length > 1 && (
               <div className="mt-2 bg-white border border-[rgba(216,170,185,0.25)] rounded-2xl overflow-hidden shadow-lg">
                 {searchResults.length === 0 ? (
                   <div className="p-5 text-center">
-                    <p className="text-sm text-[#8A7A72] mb-3" style={{ fontFamily: "'Poppins', sans-serif" }}>Nothing found for "{searchQuery}"</p>
+                    <p className="text-sm text-[#8A7A72] mb-3" style={{ fontFamily: "'Poppins', sans-serif" }}>Nothing found for "{deferredSearchQuery}"</p>
                     <div className="flex gap-2 justify-center flex-wrap">
                       {PRODUCTS.slice(0, 3).map((p) => (
                         <button key={p.id} onClick={() => { navigate("product", p); setSearchQuery(""); }}

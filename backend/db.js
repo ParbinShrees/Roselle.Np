@@ -5,8 +5,9 @@
 const path = require('path');
 const fs   = require('fs');
 
-const DB_PATH = path.join(__dirname, 'data', 'orders.db');
-const DATA_DIR = path.join(__dirname, 'data');
+const isVercel = !!process.env.VERCEL;
+const DATA_DIR = isVercel ? '/tmp/data' : path.join(__dirname, 'data');
+const DB_PATH = path.join(DATA_DIR, 'orders.db');
 
 let _db = null;
 
