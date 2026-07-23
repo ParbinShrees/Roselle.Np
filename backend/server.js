@@ -130,14 +130,22 @@ app.get('/api/orders', (_req, res) => {
 });
 
 // ─── Start (wait for DB to init first) ───────────────────────────────────────
-db.initDb().then(() => {
-  app.listen(PORT, () => {
-    console.log(`\n🌸 Roselle backend  →  http://localhost:${PORT}`);
-    console.log(`   POST /api/orders   confirm an order`);
-    console.log(`   GET  /api/orders   view all saved orders`);
-    console.log(`   GET  /api/health   health check\n`);
+if (process.env.VERCEL) {
+  // If running on Vercel, initialize DB synchronously (or inside route) 
+  // Vercel handles the server listening automatically
+  db.initDb().catch(console.error);
+} else {
+  db.initDb().then(() => {
+    app.listen(PORT, () => {
+      console.log(`\n🌸 Roselle backend  →  http://localhost:${PORT}`);
+      console.log(`   POST /api/orders   confirm an order`);
+      console.log(`   GET  /api/orders   view all saved orders`);
+      console.log(`   GET  /api/health   health check\n`);
+    });
+  }).catch(err => {
+    console.error('❌ Failed to start — database init error:', err);
+    process.exit(1);
   });
-}).catch(err => {
-  console.error('❌ Failed to start — database init error:', err);
-  process.exit(1);
-});
+}
+
+module.exports = app;
