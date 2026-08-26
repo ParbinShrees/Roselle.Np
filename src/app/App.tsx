@@ -128,7 +128,9 @@ const OCCASION_ICONS = [Cake, Gem, HeartHandshake, Crown, Gift, Sparkles];
 
 const CheckoutPage = lazy(() => import("./pages/CheckoutPage"));
 const ConfirmationPage = lazy(() => import("./pages/ConfirmationPage"));
+const AdminDashboard = lazy(() => import("./pages/AdminDashboard"));
 
+import { usePageTransition, useScrollReveal } from "./hooks/useAnimations";
 
 /* ═══════════════════════════════════════════════
    TREND BADGE
@@ -297,6 +299,9 @@ const ProductCard = memo(function ProductCard({
    MAIN APP
 ═══════════════════════════════════════════════ */
 export default function App() {
+  /* ── Admin route shortcut ── */
+  const isAdmin = window.location.pathname === "/admin";
+
   const [page, setPage] = useState<Page>("home");
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [cart, setCart] = useState<CartItem[]>([]);
@@ -317,6 +322,10 @@ export default function App() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const searchRef = useRef<HTMLInputElement>(null);
+
+  /* ── Animation hooks ── */
+  const { currentPage, style: pageStyle } = usePageTransition(page);
+  useScrollReveal();
 
 
   /* Lock scroll */
@@ -1317,6 +1326,16 @@ export default function App() {
   /* ═══════════════════════════════════════════════
      RENDER
   ═══════════════════════════════════════════════ */
+
+  /* Admin route — renders independently, no nav/footer */
+  if (isAdmin) {
+    return (
+      <Suspense fallback={<div className="flex items-center justify-center h-screen text-[#D1748C]">Loading admin…</div>}>
+        <AdminDashboard />
+      </Suspense>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-[#FFF8F3] flex flex-col">
       <Toaster
@@ -1328,20 +1347,21 @@ export default function App() {
       <Header />
       {cartOpen && <CartDrawer />}
 
-      <main className="flex-1">
+      <main className="flex-1" style={pageStyle}>
         <Suspense fallback={<div className="flex items-center justify-center h-64 text-[#D1748C]">Loading...</div>}>
-          {page === "home" && <HomePage />}
-          {page === "flowers" && <FlowersPage />}
-          {page === "new-arrivals" && <NewArrivalsPage />}
-          {page === "product" && <ProductDetailPage />}
-          {page === "checkout" && <CheckoutPage cart={cart} cartTotal={cartTotal} navigate={navigate} form={form} setForm={setForm} isSubmitting={isSubmitting} setIsSubmitting={setIsSubmitting} />}
-          {page === "confirmation" && <ConfirmationPage cart={cart} cartTotal={cartTotal} navigate={navigate} setCart={setCart} form={form} />}
-          {page === "about" && <AboutPage />}
-          {page === "contact" && <ContactPage />}
+          {currentPage === "home" && <HomePage />}
+          {currentPage === "flowers" && <FlowersPage />}
+          {currentPage === "new-arrivals" && <NewArrivalsPage />}
+          {currentPage === "product" && <ProductDetailPage />}
+          {currentPage === "checkout" && <CheckoutPage cart={cart} cartTotal={cartTotal} navigate={navigate} form={form} setForm={setForm} isSubmitting={isSubmitting} setIsSubmitting={setIsSubmitting} />}
+          {currentPage === "confirmation" && <ConfirmationPage cart={cart} cartTotal={cartTotal} navigate={navigate} setCart={setCart} form={form} />}
+          {currentPage === "about" && <AboutPage />}
+          {currentPage === "contact" && <ContactPage />}
         </Suspense>
       </main>
 
-      {page !== "confirmation" && <Footer />}
+      {currentPage !== "confirmation" && <Footer />}
     </div>
   );
 }
+

@@ -1,22 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#D1748C" />
 
-  <!DOCTYPE html>
-  <html lang="en">
-    <head>
-      
-      <meta charset="UTF-8" />
-      <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-      <title>Flower Price Website</title>
-      <meta name="description" content="Easily compare and track flower prices in Rs, providing users with a clean interface to make informed purchasing decisions." />
-      <meta name="robots" content="noindex, nofollow" />
-      <style>html, body { height: 100%; margin: 0; } #root { height: 100%; }</style>
-      
-    </head>
+    <!-- Primary SEO -->
+    <title>Roselle — Handmade Flower Bouquets in Pokhara, Nepal</title>
+    <meta name="description" content="Roselle crafts beautiful handmade fuzzy-wire flower bouquets in Rambazar, Pokhara. Never wilts, lasts forever. Perfect for birthdays, anniversaries, and weddings. Order online!" />
+    <meta name="keywords" content="flower bouquet pokhara, handmade flowers nepal, fuzzy wire bouquet, roselle pokhara, flower gift nepal, birthday bouquet pokhara, anniversary flowers" />
+    <meta name="author" content="Roselle, Pokhara" />
+    <meta name="robots" content="index, follow" />
+    <link rel="canonical" href="https://roselle-np.vercel.app/" />
 
-    <body>
-      
-      <div id="root"></div>
-      <script type="module" src="/src/main.tsx"></script>
-      
-    </body>
-  </html>
-  
+    <!-- Open Graph (Facebook, WhatsApp preview) -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://roselle-np.vercel.app/" />
+    <meta property="og:title" content="Roselle — Handmade Flower Bouquets in Pokhara" />
+    <meta property="og:description" content="Beautiful handmade fuzzy-wire bouquets that never wilt. Delivered in Pokhara. Order online now! 🌸" />
+    <meta property="og:image" content="https://roselle-np.vercel.app/og-preview.jpg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:locale" content="en_NP" />
+    <meta property="og:site_name" content="Roselle" />
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Roselle — Handmade Flower Bouquets in Pokhara" />
+    <meta name="twitter:description" content="Beautiful handmade fuzzy-wire bouquets that never wilt. Delivered in Pokhara. 🌸" />
+    <meta name="twitter:image" content="https://roselle-np.vercel.app/og-preview.jpg" />
+
+    <!-- Structured Data (Google rich results) -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "LocalBusiness",
+      "name": "Roselle",
+      "description": "Handmade fuzzy-wire flower bouquets in Pokhara, Nepal. Never wilts. Lasts forever.",
+      "url": "https://roselle-np.vercel.app/",
+      "telephone": "+977-9769695263",
+      "address": {
+        "@type": "PostalAddress",
+        "streetAddress": "Rambazar",
+        "addressLocality": "Pokhara",
+        "addressCountry": "NP"
+      },
+      "geo": {
+        "@type": "GeoCoordinates",
+        "latitude": "28.2096",
+        "longitude": "83.9856"
+      },
+      "openingHours": "Mo-Su 09:00-20:00",
+      "priceRange": "Rs.700 - Rs.3500",
+      "image": "https://roselle-np.vercel.app/og-preview.jpg",
+      "sameAs": [
+        "https://www.instagram.com/theroselle_official/",
+        "https://www.tiktok.com/@theroselle_official"
+      ]
+    }
+    </script>
+
+    <!-- Preconnect for fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700;800&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+
+    <style>
+      html, body { height: 100%; margin: 0; }
+      #root { height: 100%; }
+      /* Prevent FOUC */
+      body { font-family: 'Poppins', sans-serif; background: #FFF8F3; }
+    </style>
+  </head>
+
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

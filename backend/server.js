@@ -115,7 +115,12 @@ app.post('/api/orders', async (req, res) => {
 });
 
 // ─── GET /api/orders ─────────────────────────────────────────────────────────
-app.get('/api/orders', (_req, res) => {
+// Protected with ADMIN_PASSWORD env var
+app.get('/api/orders', (req, res) => {
+  const pwd = req.headers['x-admin-password'];
+  if (pwd !== (process.env.ADMIN_PASSWORD || 'roselle2024')) {
+    return res.status(401).json({ success: false, errors: ['Unauthorised.'] });
+  }
   try {
     const orders = db.all(`SELECT * FROM orders ORDER BY id DESC`);
     const enriched = orders.map(order => ({
@@ -128,6 +133,27 @@ app.get('/api/orders', (_req, res) => {
     return res.status(500).json({ success: false, errors: ['Failed to load orders.'] });
   }
 });
+
+// ─── PATCH /api/orders/:id/status ─────────────────────────────────────────────
+app.patch('/api/orders/:id/status', (req, res) => {
+  const pwd = req.headers['x-admin-password'];
+  if (pwd !== (process.env.ADMIN_PASSWORD || 'roselle2024')) {
+    return res.status(401).json({ success: false, errors: ['Unauthorised.'] });
+  }
+  const { status } = req.body;
+  const allowed = ['pending', 'confirmed', 'delivered', 'cancelled'];
+  if (!allowed.includes(status)) {
+    return res.status(400).json({ success: false, errors: [`Invalid status. Must be one of: ${allowed.join(', ')}`] });
+  }
+  try {
+    db.run('UPDATE orders SET status = ? WHERE id = ?', [status, req.params.id]);
+    return res.json({ success: true, message: `Order #${req.params.id} marked as ${status}.` });
+  } catch (err) {
+    console.error('Status update failed:', err);
+    return res.status(500).json({ success: false, errors: ['Failed to update status.'] });
+  }
+});
+
 
 // ─── Start (wait for DB to init first) ───────────────────────────────────────
 if (process.env.VERCEL) {
