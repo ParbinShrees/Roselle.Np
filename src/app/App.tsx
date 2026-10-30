@@ -1,4 +1,5 @@
-import { useState, useEffect, useRef, useCallback, memo, useDeferredValue, Suspense, lazy } from "react";
+import { useState, useEffect, useRef, useCallback, memo, useDeferredValue, useTransition, Suspense, lazy } from "react";
+
 import { Toaster, toast } from "sonner";
 import { ImageWithFallback } from "@/app/components/figma/ImageWithFallback";
 import emailjs from '@emailjs/browser';
@@ -326,9 +327,11 @@ export default function App() {
 
   const searchRef = useRef<HTMLInputElement>(null);
 
-  /* ── Animation hooks ── */
+  /* ── Concurrency & Animation hooks ── */
+  const [, startTransition] = useTransition();
   const { currentPage, style: pageStyle } = usePageTransition(page);
   useScrollReveal();
+
 
 
   /* Lock scroll */
@@ -399,16 +402,21 @@ export default function App() {
   const anyFilter = filterColor !== "All" || filterFlower !== "All" || filterOccasion !== "All" || filterCategory !== "All";
   const clearFilters = () => { setFilterColor("All"); setFilterFlower("All"); setFilterOccasion("All"); setFilterCategory("All"); };
 
-  const navigate = (p: Page, product?: Product) => {
+  const navigate = useCallback((p: Page, product?: Product) => {
+    setMobileMenuOpen(false);
+    setSearchOpen(false);
     if (product) {
       setSelectedProduct(product);
       setRecentlyViewed((prev) => [product.id, ...prev.filter((id) => id !== product.id)].slice(0, 6));
     }
-    setPage(p);
-    setMobileMenuOpen(false);
-    setSearchOpen(false);
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  };
+    startTransition(() => {
+      setPage(p);
+    });
+    requestAnimationFrame(() => {
+      window.scrollTo(0, 0);
+    });
+  }, [startTransition]);
+
 
   /* ─────────────────── HEADER ─────────────────── */
   const Header = () => (
@@ -434,13 +442,14 @@ export default function App() {
             <button
               key={p}
               onClick={() => navigate(p)}
-              className={`px-3 py-1.5 rounded-full text-xs lg:text-sm transition-all whitespace-nowrap ${
+              className={`min-h-[44px] px-3.5 py-2 inline-flex items-center rounded-full text-xs lg:text-sm transition-all whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D1748C] ${
                 page === p
                   ? "bg-[#F5E8EE] text-[#D1748C] font-semibold"
                   : "text-[#5A5A5A] hover:text-[#2B2B2B] hover:bg-[#F5E8EE]/50"
               }`}
               style={{ fontFamily: "'Poppins', sans-serif" }}
             >
+
               {label}
             </button>
           ))}
@@ -1446,7 +1455,16 @@ export default function App() {
       {cartOpen && <CartDrawer />}
 
       <main className="flex-1" style={pageStyle}>
-        <Suspense fallback={<div className="flex items-center justify-center h-64 text-[#D1748C]">Loading...</div>}>
+        <Suspense
+          fallback={
+            <div className="max-w-5xl mx-auto px-4 py-20 flex flex-col items-center justify-center gap-3.5">
+              <div className="w-9 h-9 border-2 border-[#F5E8EE] border-t-[#D1748C] rounded-full animate-spin" />
+              <p className="text-xs text-[#8A7A72] tracking-wide" style={{ fontFamily: "'Poppins', sans-serif" }}>
+                Arranging petals…
+              </p>
+            </div>
+          }
+        >
           {currentPage === "home" && <HomePage />}
           {currentPage === "flowers" && <FlowersPage />}
           {currentPage === "builder" && <CustomBouquetBuilder onAddToCart={addToCart} navigate={navigate} />}
@@ -1457,7 +1475,33 @@ export default function App() {
           {currentPage === "confirmation" && <ConfirmationPage cart={cart} cartTotal={cartTotal} navigate={navigate} setCart={setCart} form={form} />}
           {currentPage === "about" && <AboutPage />}
           {currentPage === "contact" && <ContactPage />}
+
+          {/* 404 Fallback */}
+          {![
+            "home", "flowers", "builder", "track", "new-arrivals",
+            "product", "checkout", "confirmation", "about", "contact"
+          ].includes(currentPage) && (
+            <div className="max-w-md mx-auto text-center py-24 px-4">
+              <div className="w-14 h-14 bg-[#F5E8EE] rounded-full flex items-center justify-center mx-auto mb-4 text-2xl">
+                🌸
+              </div>
+              <h2 className="text-2xl sm:text-3xl font-bold text-[#2B2B2B] mb-2" style={{ fontFamily: "'Playfair Display', serif" }}>
+                Page Not Found
+              </h2>
+              <p className="text-xs sm:text-sm text-[#8A7A72] mb-6 leading-relaxed" style={{ fontFamily: "'Poppins', sans-serif" }}>
+                The floral page you are looking for doesn't exist or has moved.
+              </p>
+              <button
+                onClick={() => navigate("home")}
+                className="bg-[#1A1A1A] text-white px-7 py-3 rounded-full text-xs font-semibold hover:bg-[#D1748C] transition-all shadow-sm"
+                style={{ fontFamily: "'Poppins', sans-serif" }}
+              >
+                Return to Flower Shop
+              </button>
+            </div>
+          )}
         </Suspense>
+
 
       </main>
 

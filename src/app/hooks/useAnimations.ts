@@ -61,26 +61,14 @@ export function useScrollReveal() {
 }
 
 /**
- * usePageTransition — smooth fade when the page changes.
+ * usePageTransition — instant, GPU-accelerated page transition without blocking re-renders.
  */
 export function usePageTransition(page: string) {
-  const [visible, setVisible] = useState(false);
-  const [currentPage, setCurrentPage] = useState(page);
-
-  useEffect(() => {
-    setVisible(false);
-    const t = setTimeout(() => {
-      setCurrentPage(page);
-      setVisible(true);
-    }, 80);
-    return () => clearTimeout(t);
-  }, [page]);
-
   return {
-    currentPage,
+    currentPage: page,
     style: {
-      opacity: visible ? 1 : 0,
-      transition: "opacity 0.3s ease",
+      animation: "fadeIn 0.22s ease-out",
     } as React.CSSProperties,
   };
 }
+

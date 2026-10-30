@@ -12,15 +12,46 @@ const { sendOrderEmails } = require('./mailer');
 const app  = express();
 const PORT = process.env.PORT || 3001;
 
+// ─── Security Headers ────────────────────────────────────────────────────────
+app.use((_req, res, next) => {
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-Frame-Options', 'SAMEORIGIN');
+  res.setHeader('X-XSS-Protection', '1; mode=block');
+  res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+  next();
+});
+
 // ─── Middleware ───────────────────────────────────────────────────────────────
 app.use(cors({
-  origin: ['http://localhost:5173', 'http://127.0.0.1:5173'],
-  methods: ['GET', 'POST', 'OPTIONS'],
-  allowedHeaders: ['Content-Type'],
+  origin: ['http://localhost:5173', 'http://127.0.0.1:5173', 'https://roselle-np.vercel.app'],
+  methods: ['GET', 'POST', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'x-admin-password'],
 }));
-app.use(express.json());
+app.use(express.json({ limit: '50kb' }));
 
-// ─── Validation ───────────────────────────────────────────────────────────────
+// ─── In-Memory Rate Limiter ──────────────────────────────────────────────────
+const rateLimits = new Map();
+const rateLimiter = (maxRequests, windowMs) => (req, res, next) => {
+  const ip = String(req.headers['x-forwarded-for'] || req.socket?.remoteAddress || 'unknown');
+  const now = Date.now();
+  const record = rateLimits.get(ip) || { count: 0, resetTime: now + windowMs };
+
+  if (now > record.resetTime) {
+    record.count = 1;
+    record.resetTime = now + windowMs;
+  } else {
+    record.count++;
+  }
+  rateLimits.set(ip, record);
+
+  if (record.count > maxRequests) {
+    return res.status(429).json({ success: false, errors: ['Too many requests. Please try again shortly.'] });
+  }
+  next();
+};
+
+// ─── Validation & Sanitization ───────────────────────────────────────────────
+const sanitize      = (v) => String(v ?? '').replace(/[<>]/g, '').trim();
 const isValidPhone  = (v) => /^\d{10}$/.test(String(v ?? '').trim());
 const isValidEmail  = (v) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(v ?? '').trim());
 const isNonEmpty    = (v) => typeof v === 'string' && v.trim().length > 0;
@@ -32,18 +63,17 @@ app.get('/api/health', (_req, res) => {
 });
 
 // ─── POST /api/orders ─────────────────────────────────────────────────────────
-app.post('/api/orders', async (req, res) => {
+app.post('/api/orders', rateLimiter(15, 10 * 60 * 1000), async (req, res) => {
   try {
-    const {
-      customer_name,
-      phone,
-      email,
-      address,
-      delivery_zone = 'inside',
-      gift_message  = '',
-      total_amount,
-      items = [],
-    } = req.body;
+    const customer_name = sanitize(req.body.customer_name);
+    const phone         = sanitize(req.body.phone);
+    const email         = sanitize(req.body.email).toLowerCase();
+    const address       = sanitize(req.body.address);
+    const delivery_zone = req.body.delivery_zone === 'outside' ? 'outside' : 'inside';
+    const gift_message  = sanitize(req.body.gift_message);
+    const total_amount  = req.body.total_amount;
+    const items         = Array.isArray(req.body.items) ? req.body.items : [];
+
 
     // ── Validate ──────────────────────────────────────────────────────────
     const errors = [];
@@ -115,11 +145,12 @@ app.post('/api/orders', async (req, res) => {
 });
 
 // ─── GET /api/orders/track (Public customer order tracking) ───────────────────
-app.get('/api/orders/track', (req, res) => {
-  const query = String(req.query.q || '').trim();
+app.get('/api/orders/track', rateLimiter(30, 60 * 1000), (req, res) => {
+  const query = sanitize(req.query.q);
   if (!query) {
     return res.status(400).json({ success: false, errors: ['Please provide an Order ID or 10-digit phone number.'] });
   }
+
 
   try {
     let order = null;
