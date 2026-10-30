@@ -134,6 +134,7 @@ const CustomBouquetBuilder = lazy(() => import("./pages/CustomBouquetBuilder"));
 const OrderTracker = lazy(() => import("./pages/OrderTracker"));
 
 import { usePageTransition, useScrollReveal } from "./hooks/useAnimations";
+import PolicyModal from "./components/PolicyModal";
 
 
 /* ═══════════════════════════════════════════════
@@ -324,6 +325,8 @@ export default function App() {
   const [recentlyViewed, setRecentlyViewed] = useState<number[]>([]);
   const [form, setForm] = useState({ name: "", phone: "", email: "", address: "", zone: "inside", note: "" });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [policyType, setPolicyType] = useState<"privacy" | "terms" | "delivery" | null>(null);
+
 
   const searchRef = useRef<HTMLInputElement>(null);
 
@@ -720,11 +723,19 @@ export default function App() {
             </div>
           </div>
           <div>
-            <h4 className="text-xs font-semibold mb-4 text-[#E8A0B4] uppercase tracking-wider" style={{ fontFamily: "'Poppins', sans-serif" }}>Delivery</h4>
-            <p className="text-sm text-[#7A7A7A] leading-relaxed" style={{ fontFamily: "'Poppins', sans-serif" }}>
+            <h4 className="text-xs font-semibold mb-4 text-[#E8A0B4] uppercase tracking-wider" style={{ fontFamily: "'Poppins', sans-serif" }}>Delivery & Policies</h4>
+            <p className="text-sm text-[#7A7A7A] leading-relaxed mb-3" style={{ fontFamily: "'Poppins', sans-serif" }}>
               Cash on Delivery inside Pokhara Valley. Outside the valley, we confirm delivery cost before shipping.
             </p>
+            <div className="flex flex-wrap gap-2 text-xs">
+              <button onClick={() => setPolicyType("delivery")} className="text-[#E8A0B4] hover:underline">Delivery Policy</button>
+              <span className="text-[#5A5A5A]">·</span>
+              <button onClick={() => setPolicyType("privacy")} className="text-[#E8A0B4] hover:underline">Privacy</button>
+              <span className="text-[#5A5A5A]">·</span>
+              <button onClick={() => setPolicyType("terms")} className="text-[#E8A0B4] hover:underline">Flower Guarantee</button>
+            </div>
           </div>
+
         </div>
         <div className="border-t border-white/[0.06] pt-5 flex flex-col sm:flex-row justify-between gap-2">
           <p className="text-xs text-[#4A4A4A]" style={{ fontFamily: "'Poppins', sans-serif" }}>© 2026 Roselle. All rights reserved.</p>
@@ -1506,7 +1517,14 @@ export default function App() {
       </main>
 
       {currentPage !== "confirmation" && <Footer />}
+
+      <PolicyModal
+        isOpen={policyType !== null}
+        onClose={() => setPolicyType(null)}
+        type={policyType || "privacy"}
+      />
     </div>
   );
 }
+
 

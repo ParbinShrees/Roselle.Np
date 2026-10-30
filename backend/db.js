@@ -99,7 +99,13 @@ const initDb = async () => {
     )
   `);
 
+  // ─── Indexes for fast lookups & tracking ──────────────────────────────────
+  _db.run(`CREATE INDEX IF NOT EXISTS idx_orders_phone ON orders(phone)`);
+  _db.run(`CREATE INDEX IF NOT EXISTS idx_orders_status ON orders(status)`);
+  _db.run(`CREATE INDEX IF NOT EXISTS idx_order_items_order_id ON order_items(order_id)`);
+
   saveDb();
+
   console.log('✅ Database ready →', DB_PATH);
 };
 
