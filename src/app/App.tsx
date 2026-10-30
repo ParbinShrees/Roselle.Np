@@ -129,10 +129,11 @@ const OCCASION_ICONS = [Cake, Gem, HeartHandshake, Crown, Gift, Sparkles];
 const CheckoutPage = lazy(() => import("./pages/CheckoutPage"));
 const ConfirmationPage = lazy(() => import("./pages/ConfirmationPage"));
 const AdminDashboard = lazy(() => import("./pages/AdminDashboard"));
+const CustomBouquetBuilder = lazy(() => import("./pages/CustomBouquetBuilder"));
+const OrderTracker = lazy(() => import("./pages/OrderTracker"));
 
 import { usePageTransition, useScrollReveal } from "./hooks/useAnimations";
-import Card3DTilt from "./components/Card3DTilt";
-import FlowerCanvas3D from "./components/FlowerCanvas3D";
+
 
 /* ═══════════════════════════════════════════════
    TREND BADGE
@@ -196,106 +197,104 @@ const ProductCard = memo(function ProductCard({
   const categoryLabel = product.category === "frame" ? "Frame Art" : product.category === "single" ? "Single Stem" : "Bouquet";
 
   return (
-    <Card3DTilt maxTilt={8} scale={1.02} glare={true} className="rounded-2xl h-full">
-      <article
-        className="group bg-white rounded-2xl overflow-hidden border border-[rgba(216,170,185,0.25)] shadow-sm hover:shadow-xl transition-all duration-300 cursor-pointer flex flex-col h-full"
-        onClick={() => onView(product)}
-        tabIndex={0}
-        onKeyDown={(e) => e.key === "Enter" && onView(product)}
-        aria-label={`View ${product.name}, ${fmt(product.price)}`}
-      >
-        {/* Image */}
-        <div className="relative overflow-hidden bg-[#F5E8EE]" style={{ aspectRatio: "3/4" }}>
-          <ImageWithFallback
-            src={product.image}
-            alt={product.name}
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-          />
-          {/* Gradient overlay */}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+    <article
+      className="group bg-white rounded-2xl overflow-hidden border border-[rgba(216,170,185,0.25)] shadow-sm hover:shadow-xl hover:-translate-y-1.5 transition-all duration-300 cursor-pointer flex flex-col h-full"
+      onClick={() => onView(product)}
+      tabIndex={0}
+      onKeyDown={(e) => e.key === "Enter" && onView(product)}
+      aria-label={`View ${product.name}, ${fmt(product.price)}`}
+    >
+      {/* Image */}
+      <div className="relative overflow-hidden bg-[#F5E8EE]" style={{ aspectRatio: "3/4" }}>
+        <ImageWithFallback
+          src={product.image}
+          alt={product.name}
+          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+        />
+        {/* Gradient overlay */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
 
-          {/* Badges row */}
-          <div className="absolute top-3 left-3 flex flex-col gap-1.5">
-            {product.badge && (
-              <span className="text-[10px] font-semibold px-2.5 py-1 rounded-full bg-[#1A1A1A] text-[#FFF8F3] leading-none" style={{ fontFamily: "'Poppins', sans-serif" }}>
-                {product.badge}
-              </span>
-            )}
-            {!product.stock && (
-              <span className="text-[10px] font-semibold px-2.5 py-1 rounded-full bg-white/90 text-[#8A7A72] leading-none" style={{ fontFamily: "'Poppins', sans-serif" }}>
-                Out of stock
-              </span>
-            )}
-          </div>
+        {/* Badges row */}
+        <div className="absolute top-3 left-3 flex flex-col gap-1.5">
+          {product.badge && (
+            <span className="text-[10px] font-semibold px-2.5 py-1 rounded-full bg-[#1A1A1A] text-[#FFF8F3] leading-none" style={{ fontFamily: "'Poppins', sans-serif" }}>
+              {product.badge}
+            </span>
+          )}
+          {!product.stock && (
+            <span className="text-[10px] font-semibold px-2.5 py-1 rounded-full bg-white/90 text-[#8A7A72] leading-none" style={{ fontFamily: "'Poppins', sans-serif" }}>
+              Out of stock
+            </span>
+          )}
+        </div>
 
-          {/* Wishlist */}
+        {/* Wishlist */}
+        <button
+          className={`absolute top-3 right-3 w-8 h-8 rounded-full flex items-center justify-center transition-all duration-200 shadow-sm
+            ${wishlisted ? "bg-[#D1748C] text-white opacity-100 scale-100" : "bg-white/90 text-[#D1748C] opacity-0 group-hover:opacity-100 scale-95 group-hover:scale-100"}`}
+          onClick={(e) => { e.stopPropagation(); onWishlist(product.id); }}
+          aria-label={wishlisted ? "Remove from wishlist" : "Add to wishlist"}
+        >
+          <Heart size={14} className={wishlisted ? "fill-white" : ""} />
+        </button>
+
+        {/* Quick view hint */}
+        <div className="absolute bottom-3 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-all duration-200 translate-y-1 group-hover:translate-y-0">
+          <span className="inline-flex items-center gap-1 text-[10px] font-medium bg-white/90 text-[#2B2B2B] px-3 py-1.5 rounded-full shadow-sm" style={{ fontFamily: "'Poppins', sans-serif" }}>
+            <Eye size={10} /> Quick view
+          </span>
+        </div>
+      </div>
+
+      {/* Body */}
+      <div className="p-4 flex flex-col flex-1 gap-2">
+        {/* Category + trend */}
+        <div className="flex items-center justify-between gap-2">
+          <span className="text-[10px] font-medium text-[#8A7A72] uppercase tracking-wider" style={{ fontFamily: "'Poppins', sans-serif" }}>
+            {categoryLabel} · {product.color}
+          </span>
+          <TrendBadge trend={product.trend} pct={product.trendPct} />
+        </div>
+
+        {/* Name */}
+        <h3 className="font-semibold text-[#2B2B2B] leading-snug line-clamp-2" style={{ fontFamily: "'Playfair Display', serif", fontSize: "0.9375rem" }}>
+          {product.name}
+        </h3>
+
+        {/* Rating */}
+        <RatingStars rating={product.rating} count={product.reviews} />
+
+        {/* Occasions */}
+        <div className="flex flex-wrap gap-1">
+          {product.occasions.slice(0, 2).map((o) => (
+            <span key={o} className="text-[9px] font-medium text-[#4F6F52] bg-[#EDF4EE] px-2 py-0.5 rounded-full" style={{ fontFamily: "'Poppins', sans-serif" }}>
+              {o}
+            </span>
+          ))}
+          {product.occasions.length > 2 && (
+            <span className="text-[9px] font-medium text-[#8A7A72] bg-[#F0E8E0] px-2 py-0.5 rounded-full" style={{ fontFamily: "'Poppins', sans-serif" }}>
+              +{product.occasions.length - 2}
+            </span>
+          )}
+        </div>
+
+        {/* Price + CTA */}
+        <div className="flex items-center justify-between mt-auto pt-2 border-t border-[rgba(216,170,185,0.2)]">
+          <span className="text-[#D1748C] font-bold" style={{ fontFamily: "'Poppins', sans-serif", fontSize: "0.9375rem" }}>
+            {fmt(product.price)}
+          </span>
           <button
-            className={`absolute top-3 right-3 w-8 h-8 rounded-full flex items-center justify-center transition-all duration-200 shadow-sm
-              ${wishlisted ? "bg-[#D1748C] text-white opacity-100 scale-100" : "bg-white/90 text-[#D1748C] opacity-0 group-hover:opacity-100 scale-95 group-hover:scale-100"}`}
-            onClick={(e) => { e.stopPropagation(); onWishlist(product.id); }}
-            aria-label={wishlisted ? "Remove from wishlist" : "Add to wishlist"}
+            className="text-xs bg-[#1A1A1A] text-[#FFF8F3] px-3.5 py-2 rounded-full font-medium hover:bg-[#D1748C] active:scale-95 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+            disabled={!product.stock}
+            onClick={(e) => { e.stopPropagation(); onAddToCart(product); }}
+            style={{ fontFamily: "'Poppins', sans-serif" }}
+            aria-label={`Add ${product.name} to cart`}
           >
-            <Heart size={14} className={wishlisted ? "fill-white" : ""} />
+            Add to cart
           </button>
-
-          {/* Quick view hint */}
-          <div className="absolute bottom-3 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-all duration-200 translate-y-1 group-hover:translate-y-0">
-            <span className="inline-flex items-center gap-1 text-[10px] font-medium bg-white/90 text-[#2B2B2B] px-3 py-1.5 rounded-full shadow-sm" style={{ fontFamily: "'Poppins', sans-serif" }}>
-              <Eye size={10} /> Quick view
-            </span>
-          </div>
         </div>
-
-        {/* Body */}
-        <div className="p-4 flex flex-col flex-1 gap-2">
-          {/* Category + trend */}
-          <div className="flex items-center justify-between gap-2">
-            <span className="text-[10px] font-medium text-[#8A7A72] uppercase tracking-wider" style={{ fontFamily: "'Poppins', sans-serif" }}>
-              {categoryLabel} · {product.color}
-            </span>
-            <TrendBadge trend={product.trend} pct={product.trendPct} />
-          </div>
-
-          {/* Name */}
-          <h3 className="font-semibold text-[#2B2B2B] leading-snug line-clamp-2" style={{ fontFamily: "'Playfair Display', serif", fontSize: "0.9375rem" }}>
-            {product.name}
-          </h3>
-
-          {/* Rating */}
-          <RatingStars rating={product.rating} count={product.reviews} />
-
-          {/* Occasions */}
-          <div className="flex flex-wrap gap-1">
-            {product.occasions.slice(0, 2).map((o) => (
-              <span key={o} className="text-[9px] font-medium text-[#4F6F52] bg-[#EDF4EE] px-2 py-0.5 rounded-full" style={{ fontFamily: "'Poppins', sans-serif" }}>
-                {o}
-              </span>
-            ))}
-            {product.occasions.length > 2 && (
-              <span className="text-[9px] font-medium text-[#8A7A72] bg-[#F0E8E0] px-2 py-0.5 rounded-full" style={{ fontFamily: "'Poppins', sans-serif" }}>
-                +{product.occasions.length - 2}
-              </span>
-            )}
-          </div>
-
-          {/* Price + CTA */}
-          <div className="flex items-center justify-between mt-auto pt-2 border-t border-[rgba(216,170,185,0.2)]">
-            <span className="text-[#D1748C] font-bold" style={{ fontFamily: "'Poppins', sans-serif", fontSize: "0.9375rem" }}>
-              {fmt(product.price)}
-            </span>
-            <button
-              className="text-xs bg-[#1A1A1A] text-[#FFF8F3] px-3.5 py-2 rounded-full font-medium hover:bg-[#D1748C] active:scale-95 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
-              disabled={!product.stock}
-              onClick={(e) => { e.stopPropagation(); onAddToCart(product); }}
-              style={{ fontFamily: "'Poppins', sans-serif" }}
-              aria-label={`Add ${product.name} to cart`}
-            >
-              Add to cart
-            </button>
-          </div>
-        </div>
-      </article>
-    </Card3DTilt>
+      </div>
+    </article>
   );
 });
 
@@ -423,21 +422,30 @@ export default function App() {
 
         {/* Nav */}
         <nav className="hidden md:flex items-center gap-1 ml-4 flex-1">
-          {(["home","new-arrivals","flowers","about","contact"] as Page[]).map((p) => (
+          {([
+            { page: "home", label: "Home" },
+            { page: "flowers", label: "Bouquets" },
+            { page: "builder", label: "Custom Builder ✨" },
+            { page: "new-arrivals", label: "New Arrivals" },
+            { page: "track", label: "Track Order" },
+            { page: "about", label: "About" },
+            { page: "contact", label: "Contact" },
+          ] as { page: Page; label: string }[]).map(({ page: p, label }) => (
             <button
               key={p}
               onClick={() => navigate(p)}
-              className={`px-3 py-1.5 rounded-full text-sm transition-all ${
+              className={`px-3 py-1.5 rounded-full text-xs lg:text-sm transition-all whitespace-nowrap ${
                 page === p
-                  ? "bg-[#F5E8EE] text-[#D1748C] font-medium"
+                  ? "bg-[#F5E8EE] text-[#D1748C] font-semibold"
                   : "text-[#5A5A5A] hover:text-[#2B2B2B] hover:bg-[#F5E8EE]/50"
               }`}
               style={{ fontFamily: "'Poppins', sans-serif" }}
             >
-              {p === "new-arrivals" ? "New Arrivals" : p === "home" ? "Home" : p.charAt(0).toUpperCase() + p.slice(1)}
+              {label}
             </button>
           ))}
         </nav>
+
 
         {/* Right */}
         <div className="flex items-center gap-1 ml-auto">
@@ -532,19 +540,28 @@ export default function App() {
       {/* Mobile menu */}
       {mobileMenuOpen && (
         <div className="md:hidden border-t border-[rgba(216,170,185,0.2)] bg-[#FFF8F3] px-5 py-4">
-          {(["home","new-arrivals","flowers","about","contact"] as Page[]).map((p) => (
+          {([
+            { page: "home", label: "Home" },
+            { page: "flowers", label: "Bouquets" },
+            { page: "builder", label: "Custom Bouquet Builder ✨" },
+            { page: "new-arrivals", label: "New Arrivals" },
+            { page: "track", label: "Track Your Order 📦" },
+            { page: "about", label: "About Roselle" },
+            { page: "contact", label: "Contact Us" },
+          ] as { page: Page; label: string }[]).map(({ page: p, label }) => (
             <button
               key={p}
               onClick={() => navigate(p)}
-              className={`flex items-center justify-between w-full py-3 text-sm border-b border-[rgba(216,170,185,0.15)] last:border-0 ${page === p ? "text-[#D1748C] font-medium" : "text-[#2B2B2B]"}`}
+              className={`flex items-center justify-between w-full py-3 text-sm border-b border-[rgba(216,170,185,0.15)] last:border-0 ${page === p ? "text-[#D1748C] font-semibold" : "text-[#2B2B2B]"}`}
               style={{ fontFamily: "'Poppins', sans-serif" }}
             >
-              {p === "new-arrivals" ? "New Arrivals" : p === "home" ? "Home" : p.charAt(0).toUpperCase() + p.slice(1)}
+              {label}
               <ChevronRight size={14} className="text-[#8A7A72]" />
             </button>
           ))}
         </div>
       )}
+
     </header>
   );
 
@@ -662,17 +679,26 @@ export default function App() {
             </div>
           </div>
           <div>
-            <h4 className="text-xs font-semibold mb-4 text-[#E8A0B4] uppercase tracking-wider" style={{ fontFamily: "'Poppins', sans-serif" }}>Shop</h4>
+            <h4 className="text-xs font-semibold mb-4 text-[#E8A0B4] uppercase tracking-wider" style={{ fontFamily: "'Poppins', sans-serif" }}>Shop & Services</h4>
             <div className="space-y-2.5">
-              {(["home","new-arrivals","flowers","about","contact"] as Page[]).map((p) => (
-                <button key={p} onClick={() => navigate(p)}
+              {[
+                { p: "home", label: "Home" },
+                { p: "flowers", label: "All Bouquets" },
+                { p: "builder", label: "Design Your Bouquet ✨" },
+                { p: "track", label: "Track Your Order 📦" },
+                { p: "new-arrivals", label: "New Arrivals" },
+                { p: "about", label: "About Us" },
+                { p: "contact", label: "Contact & FAQs" },
+              ].map(({ p, label }) => (
+                <button key={p} onClick={() => navigate(p as Page)}
                   className="block text-sm text-[#7A7A7A] hover:text-[#FFF8F3] transition-colors"
                   style={{ fontFamily: "'Poppins', sans-serif" }}>
-                  {p === "new-arrivals" ? "New Arrivals" : p === "home" ? "Home" : p.charAt(0).toUpperCase() + p.slice(1)}
+                  {label}
                 </button>
               ))}
             </div>
           </div>
+
           <div>
             <h4 className="text-xs font-semibold mb-4 text-[#E8A0B4] uppercase tracking-wider" style={{ fontFamily: "'Poppins', sans-serif" }}>Contact</h4>
             <div className="space-y-3">
@@ -701,7 +727,6 @@ export default function App() {
 
   /* ─────────────────── HOME ─────────────────── */
   const HomePage = () => {
-    const [hero3D, setHero3D] = useState(false);
     const newArrivals = PRODUCTS.filter((p) => p.isNewArrival);
     const featured = PRODUCTS.sort((a, b) => b.rating - a.rating).slice(0, 4);
 
@@ -714,15 +739,15 @@ export default function App() {
 
               {/* Text — below image on mobile, left on desktop */}
               <div className="flex flex-col items-center text-center lg:items-start lg:text-left order-2 lg:order-1 lg:pr-10">
-                <div className="inline-flex items-center gap-2 bg-[#F5E8EE] text-[#D1748C] text-xs font-medium px-3 py-1.5 rounded-full mb-5" style={{ fontFamily: "'Poppins', sans-serif" }}>
+                <div className="inline-flex items-center gap-2 bg-[#F5E8EE] text-[#D1748C] text-xs font-semibold px-3 py-1.5 rounded-full mb-5" style={{ fontFamily: "'Poppins', sans-serif" }}>
                   <Sparkles size={11} /> Handcrafted in Rambazar, Pokhara
                 </div>
                 <h1 className="text-4xl sm:text-5xl lg:text-[3.5rem] font-bold text-[#2B2B2B] leading-[1.1] tracking-tight mb-4" style={{ fontFamily: "'Playfair Display', serif" }}>
                   Flowers That<br />
                   <em className="text-[#D1748C] not-italic">Never</em> Fade.
                 </h1>
-                <p className="text-sm sm:text-base text-[#5A5A5A] leading-relaxed mb-7 max-w-[360px]" style={{ fontFamily: "'Poppins', sans-serif" }}>
-                  Soft fuzzy-wire bouquets — tulips, roses, daisies &amp; sunflowers. Handcrafted, everlasting, delivered across Pokhara.
+                <p className="text-sm sm:text-base text-[#5A5A5A] leading-relaxed mb-7 max-w-[380px]" style={{ fontFamily: "'Poppins', sans-serif" }}>
+                  Soft fuzzy-wire bouquets — tulips, roses, daisies &amp; sunflowers. Handcrafted, everlasting, delivered right to your doorstep across Pokhara.
                 </p>
                 <div className="flex flex-wrap justify-center lg:justify-start gap-3 mb-8">
                   <button onClick={() => navigate("flowers")}
@@ -730,10 +755,10 @@ export default function App() {
                     style={{ fontFamily: "'Poppins', sans-serif" }}>
                     Shop Bouquets <ArrowRight size={15} />
                   </button>
-                  <button onClick={() => setHero3D((h) => !h)}
-                    className="border border-[#D1748C] text-[#D1748C] bg-[#F5E8EE]/50 px-6 py-3 rounded-full font-medium hover:bg-[#D1748C] hover:text-white transition-all flex items-center gap-2 shadow-sm"
+                  <button onClick={() => navigate("builder")}
+                    className="border-2 border-[#D1748C] text-[#D1748C] bg-white px-6 py-3 rounded-full font-semibold hover:bg-[#D1748C] hover:text-white transition-all flex items-center gap-2 shadow-sm"
                     style={{ fontFamily: "'Poppins', sans-serif" }}>
-                    <Sparkles size={14} /> {hero3D ? "View Photo" : "Explore 3D Model"}
+                    <Sparkles size={14} /> Design Your Own ✨
                   </button>
                 </div>
                 {/* Stats */}
@@ -747,54 +772,26 @@ export default function App() {
                 </div>
               </div>
 
-              {/* Image / 3D Canvas — top on mobile, right on desktop */}
+              {/* Image — top on mobile, right on desktop */}
               <div className="order-1 lg:order-2 flex justify-center lg:justify-end">
                 <div className="relative w-full max-w-[320px] sm:max-w-[380px] lg:max-w-none lg:w-[90%] aspect-[3/4] rounded-3xl overflow-hidden shadow-2xl shadow-[#E8A0B4]/20 bg-[#F5E8EE]">
-                  {/* View Mode Toggle Pill */}
-                  <div className="absolute top-4 right-4 z-20 flex bg-white/90 backdrop-blur-md rounded-full p-1 border border-[rgba(216,170,185,0.3)] shadow-sm">
-                    <button
-                      onClick={() => setHero3D(false)}
-                      className={`px-3 py-1 rounded-full text-xs font-medium transition-all ${
-                        !hero3D ? "bg-[#D1748C] text-white shadow-xs" : "text-[#8A7A72] hover:text-[#2B2B2B]"
-                      }`}
-                      style={{ fontFamily: "'Poppins', sans-serif" }}
-                    >
-                      Photo
-                    </button>
-                    <button
-                      onClick={() => setHero3D(true)}
-                      className={`px-3 py-1 rounded-full text-xs font-medium transition-all flex items-center gap-1 ${
-                        hero3D ? "bg-[#D1748C] text-white shadow-xs" : "text-[#8A7A72] hover:text-[#2B2B2B]"
-                      }`}
-                      style={{ fontFamily: "'Poppins', sans-serif" }}
-                    >
-                      <Sparkles size={11} /> 3D
+                  <ImageWithFallback
+                    src={pinkTulipImg}
+                    alt="Roselle blush garden bouquet"
+                    className="w-full h-full object-cover"
+                  />
+                  {/* Floating badge */}
+                  <div className="absolute bottom-5 left-5 right-5 bg-white/95 backdrop-blur-md rounded-2xl px-4 py-3.5 flex items-center justify-between shadow-lg border border-[rgba(216,170,185,0.25)]">
+                    <div>
+                      <p className="text-xs font-semibold text-[#2B2B2B]" style={{ fontFamily: "'Poppins', sans-serif" }}>Blush Garden Bouquet</p>
+                      <p className="text-sm font-bold text-[#D1748C]" style={{ fontFamily: "'Poppins', sans-serif" }}>Rs. 1,800</p>
+                    </div>
+                    <button onClick={() => addToCart(PRODUCTS[1])}
+                      className="bg-[#1A1A1A] text-white text-xs px-3.5 py-2 rounded-full hover:bg-[#D1748C] transition-colors font-medium shadow-xs"
+                      style={{ fontFamily: "'Poppins', sans-serif" }}>
+                      Add to cart
                     </button>
                   </div>
-
-                  {hero3D ? (
-                    <FlowerCanvas3D initialPreset="tulip" className="w-full h-full" />
-                  ) : (
-                    <>
-                      <ImageWithFallback
-                        src={pinkTulipImg}
-                        alt="Roselle blush garden bouquet"
-                        className="w-full h-full object-cover"
-                      />
-                      {/* Floating badge */}
-                      <div className="absolute bottom-5 left-5 right-5 bg-white/90 backdrop-blur-sm rounded-2xl px-4 py-3 flex items-center justify-between shadow-lg">
-                        <div>
-                          <p className="text-xs font-semibold text-[#2B2B2B]" style={{ fontFamily: "'Poppins', sans-serif" }}>Blush Garden Bouquet</p>
-                          <p className="text-sm font-bold text-[#D1748C]" style={{ fontFamily: "'Poppins', sans-serif" }}>Rs. 1,800</p>
-                        </div>
-                        <button onClick={() => addToCart(PRODUCTS[1])}
-                          className="bg-[#1A1A1A] text-white text-xs px-3 py-2 rounded-full hover:bg-[#D1748C] transition-colors"
-                          style={{ fontFamily: "'Poppins', sans-serif" }}>
-                          Add to cart
-                        </button>
-                      </div>
-                    </>
-                  )}
                 </div>
               </div>
 
@@ -826,58 +823,70 @@ export default function App() {
           </div>
         </section>
 
-        {/* ── 3D Interactive Flower Studio Section ── */}
+        {/* ── Bespoke Custom Bouquet Atelier Showcase ── */}
         <section className="max-w-7xl mx-auto px-4 sm:px-6 py-16" data-reveal>
-          <div className="bg-gradient-to-br from-[#FFF5F8] via-[#FFF8F3] to-[#F5E8EE] rounded-3xl p-6 sm:p-10 border border-[rgba(216,170,185,0.35)] shadow-sm">
-            <div className="grid lg:grid-cols-2 gap-10 items-center">
+          <div className="bg-gradient-to-br from-[#FFF5F8] via-[#FFF8F3] to-[#F5E8EE] rounded-3xl p-6 sm:p-12 border border-[rgba(216,170,185,0.35)] shadow-sm">
+            <div className="grid lg:grid-cols-12 gap-10 items-center">
               {/* Info Column */}
-              <div>
+              <div className="lg:col-span-7">
                 <div className="inline-flex items-center gap-2 bg-[#F5E8EE] text-[#D1748C] text-xs font-semibold px-3 py-1.5 rounded-full mb-3 uppercase tracking-wider" style={{ fontFamily: "'Poppins', sans-serif" }}>
-                  <Sparkles size={12} /> 3D Virtual Studio
+                  <Sparkles size={12} /> Roselle Custom Atelier
                 </div>
-                <h2 className="text-3xl sm:text-4xl font-bold text-[#2B2B2B] leading-tight mb-4" style={{ fontFamily: "'Playfair Display', serif" }}>
-                  Interact with Every Bloom in 3D
+                <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-[#2B2B2B] leading-tight mb-4" style={{ fontFamily: "'Playfair Display', serif" }}>
+                  Handcraft Your Own Everlasting Bouquet
                 </h2>
                 <p className="text-sm sm:text-base text-[#5A5A5A] leading-relaxed mb-6" style={{ fontFamily: "'Poppins', sans-serif" }}>
-                  Rotate, inspect, and explore our handcrafted fuzzy wire flower designs from every angle before you order. Crafted with love in Pokhara, Nepal.
+                  Mix and match flower stems, select your signature Korean wrapping aesthetic, personalize handwritten greeting cards, and add warm fairy lights.
                 </p>
-                <div className="space-y-3 mb-8">
+                <div className="grid sm:grid-cols-2 gap-3 mb-8">
                   {[
-                    "Click & drag to rotate in full 360°",
-                    "Switch between Rose, Sunflower, Tulip, and Lily presets",
-                    "Custom colors available on request for weddings & birthdays",
+                    "Pick individual roses, tulips, lilies & sunflowers",
+                    "Choose Korean frosted, vintage kraft, or luxury wrap",
+                    "Custom printed satin ribbon with your message",
+                    "Same-day & scheduled delivery in Pokhara Valley",
                   ].map((feat) => (
-                    <div key={feat} className="flex items-center gap-2 text-xs sm:text-sm text-[#2B2B2B]" style={{ fontFamily: "'Poppins', sans-serif" }}>
-                      <span className="w-5 h-5 rounded-full bg-[#EDF4EE] text-[#4F6F52] flex items-center justify-center flex-shrink-0 text-xs">✓</span>
-                      {feat}
+                    <div key={feat} className="flex items-start gap-2.5 text-xs sm:text-sm text-[#2B2B2B]" style={{ fontFamily: "'Poppins', sans-serif" }}>
+                      <span className="w-5 h-5 rounded-full bg-[#EDF4EE] text-[#4F6F52] flex items-center justify-center flex-shrink-0 text-xs font-bold mt-0.5">✓</span>
+                      <span>{feat}</span>
                     </div>
                   ))}
                 </div>
                 <div className="flex flex-wrap gap-3">
-                  <button onClick={() => navigate("flowers")}
-                    className="bg-[#1A1A1A] text-[#FFF8F3] px-7 py-3 rounded-full font-medium hover:bg-[#D1748C] active:scale-[0.97] transition-all flex items-center gap-2 shadow-md text-sm"
+                  <button onClick={() => navigate("builder")}
+                    className="bg-[#1A1A1A] text-[#FFF8F3] px-7 py-3 rounded-full font-semibold hover:bg-[#D1748C] active:scale-[0.97] transition-all flex items-center gap-2 shadow-md text-sm"
                     style={{ fontFamily: "'Poppins', sans-serif" }}>
-                    Order Handcrafted Flowers <ArrowRight size={14} />
+                    Open Bouquet Studio <ArrowRight size={14} />
                   </button>
-                  <a
-                    href="https://wa.me/9779769695263?text=Hi%20Roselle!%20I%20would%20like%20to%20order%20a%20custom%20flower%20design."
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="border border-[#25D366] text-[#25D366] bg-white px-6 py-3 rounded-full font-medium hover:bg-[#25D366] hover:text-white transition-all flex items-center gap-2 text-sm"
-                    style={{ fontFamily: "'Poppins', sans-serif" }}
-                  >
-                    <MessageCircle size={15} /> WhatsApp Custom Request
-                  </a>
+                  <button onClick={() => navigate("track")}
+                    className="border border-[rgba(43,43,43,0.3)] text-[#2B2B2B] bg-white px-6 py-3 rounded-full font-medium hover:border-[#D1748C] hover:text-[#D1748C] transition-all flex items-center gap-2 text-sm"
+                    style={{ fontFamily: "'Poppins', sans-serif" }}>
+                    <Package size={14} /> Track Existing Order
+                  </button>
                 </div>
               </div>
 
-              {/* 3D Canvas Box */}
-              <div className="w-full h-[380px] sm:h-[440px] bg-white/70 backdrop-blur rounded-3xl p-2 border border-[rgba(216,170,185,0.3)] shadow-inner">
-                <FlowerCanvas3D initialPreset="rose" className="w-full h-full" />
+              {/* Showcase Photo Box */}
+              <div className="lg:col-span-5 relative">
+                <div className="relative rounded-3xl overflow-hidden aspect-[4/5] shadow-xl border border-[rgba(216,170,185,0.3)] bg-white">
+                  <ImageWithFallback
+                    src={mixedPastelImg}
+                    alt="Custom handcrafted flower bouquet in Pokhara"
+                    className="w-full h-full object-cover"
+                  />
+                  <div className="absolute bottom-4 left-4 right-4 bg-white/95 backdrop-blur-md p-4 rounded-2xl border border-[rgba(216,170,185,0.3)] shadow-lg">
+                    <p className="text-xs font-bold text-[#2B2B2B]" style={{ fontFamily: "'Playfair Display', serif" }}>
+                      Bespoke Pastel Dream Collection
+                    </p>
+                    <p className="text-[11px] text-[#8A7A72] mt-0.5" style={{ fontFamily: "'Poppins', sans-serif" }}>
+                      Starting from Rs. 150/stem · 100% Never wilts
+                    </p>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
         </section>
+
 
 
         {/* New Arrivals */}
@@ -1153,17 +1162,8 @@ export default function App() {
   /* ─────────────────── PRODUCT DETAIL ─────────────────── */
   const ProductDetailPage = () => {
     const product = selectedProduct;
-    const [view3D, setView3D] = useState(false);
     if (!product) return null;
     const related = PRODUCTS.filter((p) => p.id !== product.id && (p.color === product.color || p.flowerType === product.flowerType)).slice(0, 4);
-
-    const preset: FlowerPreset = product.flowerType.toLowerCase().includes("sunflower")
-      ? "sunflower"
-      : product.flowerType.toLowerCase().includes("tulip")
-      ? "tulip"
-      : product.flowerType.toLowerCase().includes("lily")
-      ? "lily"
-      : "rose";
 
     return (
       <div className="max-w-6xl mx-auto px-4 sm:px-6 py-10">
@@ -1175,36 +1175,11 @@ export default function App() {
         </button>
 
         <div className="grid md:grid-cols-2 gap-10 mb-16">
-          {/* Image / 3D Canvas */}
+          {/* Image */}
           <div className="relative bg-[#F5E8EE] rounded-3xl overflow-hidden shadow-md" style={{ aspectRatio: "4/5" }}>
-            {/* Toggle Mode */}
-            <div className="absolute top-4 right-4 z-20 flex bg-white/90 backdrop-blur-md rounded-full p-1 border border-[rgba(216,170,185,0.3)] shadow-sm">
-              <button
-                onClick={() => setView3D(false)}
-                className={`px-3 py-1 rounded-full text-xs font-medium transition-all ${
-                  !view3D ? "bg-[#D1748C] text-white shadow-xs" : "text-[#8A7A72] hover:text-[#2B2B2B]"
-                }`}
-                style={{ fontFamily: "'Poppins', sans-serif" }}
-              >
-                Photo
-              </button>
-              <button
-                onClick={() => setView3D(true)}
-                className={`px-3 py-1 rounded-full text-xs font-medium transition-all flex items-center gap-1 ${
-                  view3D ? "bg-[#D1748C] text-white shadow-xs" : "text-[#8A7A72] hover:text-[#2B2B2B]"
-                }`}
-                style={{ fontFamily: "'Poppins', sans-serif" }}
-              >
-                <Sparkles size={11} /> 3D View
-              </button>
-            </div>
-
-            {view3D ? (
-              <FlowerCanvas3D initialPreset={preset} className="w-full h-full" />
-            ) : (
-              <ImageWithFallback src={product.image} alt={product.name} className="w-full h-full object-cover" />
-            )}
+            <ImageWithFallback src={product.image} alt={product.name} className="w-full h-full object-cover" />
           </div>
+
 
 
           {/* Info */}
@@ -1474,6 +1449,8 @@ export default function App() {
         <Suspense fallback={<div className="flex items-center justify-center h-64 text-[#D1748C]">Loading...</div>}>
           {currentPage === "home" && <HomePage />}
           {currentPage === "flowers" && <FlowersPage />}
+          {currentPage === "builder" && <CustomBouquetBuilder onAddToCart={addToCart} navigate={navigate} />}
+          {currentPage === "track" && <OrderTracker navigate={navigate} />}
           {currentPage === "new-arrivals" && <NewArrivalsPage />}
           {currentPage === "product" && <ProductDetailPage />}
           {currentPage === "checkout" && <CheckoutPage cart={cart} cartTotal={cartTotal} navigate={navigate} form={form} setForm={setForm} isSubmitting={isSubmitting} setIsSubmitting={setIsSubmitting} />}
@@ -1481,6 +1458,7 @@ export default function App() {
           {currentPage === "about" && <AboutPage />}
           {currentPage === "contact" && <ContactPage />}
         </Suspense>
+
       </main>
 
       {currentPage !== "confirmation" && <Footer />}

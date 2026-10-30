@@ -114,8 +114,44 @@ app.post('/api/orders', async (req, res) => {
   }
 });
 
+// ─── GET /api/orders/track (Public customer order tracking) ───────────────────
+app.get('/api/orders/track', (req, res) => {
+  const query = String(req.query.q || '').trim();
+  if (!query) {
+    return res.status(400).json({ success: false, errors: ['Please provide an Order ID or 10-digit phone number.'] });
+  }
+
+  try {
+    let order = null;
+    if (/^\d+$/.test(query) && query.length <= 6) {
+      // Numerical Order ID (e.g. 1, 25, 104)
+      order = db.get(
+        'SELECT id, customer_name, delivery_zone, status, total_amount, created_at FROM orders WHERE id = ?',
+        [parseInt(query, 10)]
+      );
+    } else {
+      // 10-digit Phone number (e.g. 9841234567)
+      order = db.get(
+        'SELECT id, customer_name, delivery_zone, status, total_amount, created_at FROM orders WHERE phone = ? ORDER BY id DESC LIMIT 1',
+        [query]
+      );
+    }
+
+    if (!order) {
+      return res.status(404).json({ success: false, errors: ['No order found for this Order ID or phone number.'] });
+    }
+
+    const items = db.all('SELECT product_name, quantity, unit_price FROM order_items WHERE order_id = ?', [order.id]);
+    return res.json({ success: true, order: { ...order, items } });
+  } catch (err) {
+    console.error('Order tracking query failed:', err);
+    return res.status(500).json({ success: false, errors: ['Failed to track order.'] });
+  }
+});
+
 // ─── GET /api/orders ─────────────────────────────────────────────────────────
 // Protected with ADMIN_PASSWORD env var
+
 app.get('/api/orders', (req, res) => {
   const pwd = req.headers['x-admin-password'];
   if (pwd !== (process.env.ADMIN_PASSWORD || 'roselle2024')) {

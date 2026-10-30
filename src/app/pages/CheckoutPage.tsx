@@ -167,11 +167,43 @@ export default function CheckoutPage({ cart, cartTotal, navigate, form, setForm,
           {/* Gift Message */}
           <div className="bg-white border border-[rgba(216,170,185,0.25)] rounded-2xl p-5">
             <label htmlFor="gift-note" className="block text-sm font-medium text-[#2B2B2B] mb-1.5" style={{ fontFamily: "'Poppins', sans-serif" }}>Gift Message (optional)</label>
-            <textarea id="gift-note" rows={3} placeholder="Add a personal note…" value={form.note}
+            <textarea id="gift-note" rows={3} placeholder="Add a personal note or special delivery instructions…" value={form.note}
               onChange={(e) => setForm((f: any) => ({ ...f, note: e.target.value }))}
               className="w-full border border-[rgba(216,170,185,0.35)] rounded-xl px-4 py-2.5 bg-white focus:outline-none focus:border-[#D1748C] focus:ring-2 focus:ring-[#E8A0B4]/20 text-sm resize-none transition-all"
               style={{ fontFamily: "'Poppins', sans-serif" }}
             />
+          </div>
+
+          {/* Scheduled Delivery Slot */}
+          <div className="bg-white border border-[rgba(216,170,185,0.25)] rounded-2xl p-5 space-y-4">
+            <h2 className="font-semibold text-[#2B2B2B]" style={{ fontFamily: "'Playfair Display', serif" }}>
+              Preferred Delivery Time (Pokhara)
+            </h2>
+            <div className="grid grid-cols-3 gap-2">
+              {[
+                { id: "morning", label: "Morning", time: "9 AM - 12 PM" },
+                { id: "afternoon", label: "Afternoon", time: "12 PM - 4 PM" },
+                { id: "evening", label: "Evening", time: "4 PM - 7 PM" },
+              ].map((slot) => {
+                const isSelected = (form.slot || "morning") === slot.id;
+                return (
+                  <button
+                    key={slot.id}
+                    type="button"
+                    onClick={() => setForm((f: any) => ({ ...f, slot: slot.id }))}
+                    className={`p-3 rounded-xl border text-center transition-all ${
+                      isSelected
+                        ? "border-[#D1748C] bg-[#FFF8F3] text-[#D1748C] font-semibold ring-1 ring-[#D1748C]"
+                        : "border-[rgba(216,170,185,0.3)] bg-white text-[#6E635F]"
+                    }`}
+                    style={{ fontFamily: "'Poppins', sans-serif" }}
+                  >
+                    <p className="text-xs">{slot.label}</p>
+                    <p className="text-[10px] text-[#8A7A72]">{slot.time}</p>
+                  </button>
+                );
+              })}
+            </div>
           </div>
 
           {/* Submit */}
@@ -193,22 +225,32 @@ export default function CheckoutPage({ cart, cartTotal, navigate, form, setForm,
         </form>
 
         {/* Order Summary */}
-        <div className="bg-white border border-[rgba(216,170,185,0.25)] rounded-2xl p-5 sticky top-20">
-          <h2 className="font-semibold text-[#2B2B2B] mb-4" style={{ fontFamily: "'Playfair Display', serif" }}>Order Summary</h2>
-          <div className="space-y-3 mb-4">
+        <div className="bg-white border border-[rgba(216,170,185,0.25)] rounded-2xl p-5 sticky top-20 space-y-4">
+          <h2 className="font-semibold text-[#2B2B2B]" style={{ fontFamily: "'Playfair Display', serif" }}>Order Summary</h2>
+          <div className="space-y-3 mb-4 max-h-[300px] overflow-y-auto pr-1">
             {cart.map((item) => (
-              <div key={item.id} className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-lg overflow-hidden flex-shrink-0 bg-[#F5E8EE]">
-                  <ImageWithFallback src={item.image} alt={item.name} className="w-full h-full object-cover" />
+              <div key={item.id} className="flex flex-col gap-1 pb-2 border-b border-[rgba(216,170,185,0.15)] last:border-0">
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 rounded-lg overflow-hidden flex-shrink-0 bg-[#F5E8EE]">
+                    <ImageWithFallback src={item.image} alt={item.name} className="w-full h-full object-cover" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-medium text-[#2B2B2B] truncate" style={{ fontFamily: "'Poppins', sans-serif" }}>{item.name}</p>
+                    <p className="text-[10px] text-[#8A7A72]" style={{ fontFamily: "'Poppins', sans-serif" }}>×{item.qty}</p>
+                  </div>
+                  <span className="text-xs font-semibold text-[#D1748C] flex-shrink-0" style={{ fontFamily: "'Poppins', sans-serif" }}>{fmt(item.price * item.qty)}</span>
                 </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-xs font-medium text-[#2B2B2B] truncate" style={{ fontFamily: "'Poppins', sans-serif" }}>{item.name}</p>
-                  <p className="text-[10px] text-[#8A7A72]" style={{ fontFamily: "'Poppins', sans-serif" }}>×{item.qty}</p>
-                </div>
-                <span className="text-xs font-semibold text-[#D1748C] flex-shrink-0" style={{ fontFamily: "'Poppins', sans-serif" }}>{fmt(item.price * item.qty)}</span>
+                {item.customDetails && (
+                  <div className="text-[10px] text-[#8A7A72] bg-[#FFF8F3] p-1.5 rounded-lg leading-tight" style={{ fontFamily: "'Poppins', sans-serif" }}>
+                    <p className="font-medium text-[#D1748C]">• {item.customDetails.stemsSummary}</p>
+                    {item.customDetails.wrapping && <p>• Wrap: {item.customDetails.wrapping}</p>}
+                    {item.customDetails.ribbon && <p>• Ribbon: {item.customDetails.ribbon}</p>}
+                  </div>
+                )}
               </div>
             ))}
           </div>
+
           <div className="border-t border-[rgba(216,170,185,0.2)] pt-3 space-y-1.5">
             <div className="flex justify-between">
               <span className="text-sm text-[#8A7A72]" style={{ fontFamily: "'Poppins', sans-serif" }}>Subtotal</span>
@@ -216,11 +258,21 @@ export default function CheckoutPage({ cart, cartTotal, navigate, form, setForm,
             </div>
             <div className="flex justify-between">
               <span className="text-sm text-[#8A7A72]" style={{ fontFamily: "'Poppins', sans-serif" }}>Delivery</span>
-              <span className="text-sm text-[#4F6F52]" style={{ fontFamily: "'Poppins', sans-serif" }}>Confirmed later</span>
+              <span className="text-sm text-[#4F6F52] font-medium" style={{ fontFamily: "'Poppins', sans-serif" }}>
+                {form.zone === "outside" ? "Rs. 150 (Outside valley)" : "Free (Inside Pokhara)"}
+              </span>
             </div>
+            <div className="flex justify-between border-t border-[rgba(216,170,185,0.2)] pt-2 text-base font-bold text-[#2B2B2B]" style={{ fontFamily: "'Poppins', sans-serif" }}>
+              <span>Total Payable</span>
+              <span className="text-[#D1748C]">{fmt(cartTotal + (form.zone === "outside" ? 150 : 0))}</span>
+            </div>
+            <p className="text-[10px] text-[#8A7A72] text-center pt-1" style={{ fontFamily: "'Poppins', sans-serif" }}>
+              💵 Cash on Delivery upon receiving your flowers
+            </p>
           </div>
         </div>
       </div>
     </div>
   );
 }
+
